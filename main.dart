@@ -478,19 +478,24 @@ class _WeatherPillWidgetState extends State<WeatherPillWidget>
         setState(() {
           weatherDesc = data['weather'][0]['description'];
           temperature = data['main']['temp'].toDouble();
-          if (weatherDesc.contains("cloud", 0)) {
-            weatherEmoji = "☁️";
-          } else if (weatherDesc.contains("rain", 0)) {
-            weatherEmoji = "🌧";
-          } else if (weatherDesc.contains("snow", 0)) {
-            weatherEmoji = "❄️";
-          } else if (weatherDesc.contains("clear", 0)) {
-            weatherEmoji = "☀️";
-          } else if (weatherDesc.contains("wind", 0)) {
-            weatherEmoji = "💨";
-          } else {
-            weatherEmoji = "🌤";
-          }
+          final weatherId = data['weather'][0]['id'];
+if (weatherId >= 200 && weatherId < 300) {
+  weatherEmoji = "⛈️";
+} else if (weatherId >= 300 && weatherId < 400) {
+  weatherEmoji = "🌧️";
+} else if (weatherId >= 500 && weatherId < 600) {
+  weatherEmoji = "🌧️";
+} else if (weatherId >= 600 && weatherId < 700) {
+  weatherEmoji = "❄️";
+} else if (weatherId >= 700 && weatherId < 800) {
+  weatherEmoji = "🌫️";
+} else if (weatherId == 800) {
+  weatherEmoji = "☀️";
+} else if (weatherId > 800) {
+  weatherEmoji = "☁️";
+} else {
+  weatherEmoji = "🌤️";
+}
           loading = false;
         });
       } else {
@@ -2169,17 +2174,17 @@ class _ThemeSettingsSheetState extends State<ThemeSettingsSheet> {
   final TextEditingController _cityController = TextEditingController();
   // Updated suggestion list to include additional cities like Hyderabad, India.
   final List<String> cityOptions = [
-    "Chicago, USA",
-    "Chennai, India",
-    "Chihuahua, Mexico",
-    "Chengdu, China",
-    "Chisinau, Moldova",
-    "Hyderabad, India",
-    "London, UK",
-    "New York, USA",
-    "Paris, France",
-    "Tokyo, Japan"
-  ];
+  "Hyderabad, India",
+  "London, UK", 
+  "New York, USA",
+  "Paris, France",
+  "Tokyo, Japan",
+  "Chicago, USA",
+  "Chennai, India",
+  "Chihuahua, Mexico",
+  "Chengdu, China",
+  "Chisinau, Moldova"
+];
 
   @override
   void initState() {
@@ -2259,25 +2264,45 @@ class _ThemeSettingsSheetState extends State<ThemeSettingsSheet> {
                   flex: 3,
                   child: Autocomplete<String>(
                     optionsBuilder: (TextEditingValue textEditingValue) {
-                      if (textEditingValue.text.length < 3) {
+                      if (textEditingValue.text.isEmpty) {
                         return const Iterable<String>.empty();
                       }
-                      return cityOptions.where((city) => city.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                      return cityOptions.where((city) =>
+                          city.toLowerCase().contains(textEditingValue.text.toLowerCase())
+                      );
                     },
-                    fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode fieldFocusNode, VoidCallback onFieldSubmitted) {
-                      // Use the controller we created so that text persists.
+                    fieldViewBuilder: (context, controller, focusNode, _) {
                       return TextField(
                         controller: _cityController,
-                        focusNode: fieldFocusNode,
+                        focusNode: focusNode,
                         decoration: const InputDecoration(
-                          labelText: "City (e.g., Chi...)",
+                          labelText: "Search city...",
+                          hintText: "e.g. Hyd, Lon, New",
                           border: OutlineInputBorder(),
                         ),
                       );
                     },
                     onSelected: (String selection) {
                       _cityController.text = selection;
-                      taskProvider.updateSelectedCity(selection);
+                      taskProvider.updateSelectedCity(selection.split(",")[0].trim());
+                      context.read<TaskProvider>().notifyListeners();
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Material(
+                        elevation: 4,
+                        child: ListView.separated(
+                          padding: EdgeInsets.zero,
+                          itemCount: options.length,
+                          separatorBuilder: (_, __) => Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final option = options.elementAt(index);
+                            return ListTile(
+                              title: Text(option),
+                              onTap: () => onSelected(option),
+                            );
+                          },
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -2290,9 +2315,16 @@ class _ThemeSettingsSheetState extends State<ThemeSettingsSheet> {
                   child: Container(
                     width: 50,
                     height: 50,
-                    decoration: BoxDecoration(color: Colors.blueGrey, border: Border.all(color: Colors.black), borderRadius: BorderRadius.circular(4)),
+                    decoration: BoxDecoration(
+                        color: Colors.blueGrey,
+                        border: Border.all(color: Colors.black),
+                        borderRadius: BorderRadius.circular(4)
+                    ),
                     child: Center(
-                      child: Text(taskProvider.tempUnit, style: const TextStyle(fontSize: 24, color: Colors.white)),
+                      child: Text(
+                          taskProvider.tempUnit,
+                          style: TextStyle(fontSize: 24, color: Colors.white)
+                      ),
                     ),
                   ),
                 ),
